@@ -1,6 +1,6 @@
 {
   "name": "mock-proxy-autocookie",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "local server mock and proxy tool",
   "main": "dist/index.js",
   "scripts": {
@@ -29,8 +29,10 @@
     "url": "https://github.com/zhangshaolong/mock-proxy-autocookie/issues"
   },
   "homepage": "https://github.com/zhangshaolong/mock-proxy-autocookie#readme",
+  "dependencies": {
+    "chrome-cookies-secure": "^1.3.3"
+  },
   "devDependencies": {
-    "chrome-cookies-secure": "^1.3.3",
     "service-api": "^0.1.4",
     "simplite": "0.0.2",
     "simplite-loader": "0.0.3",
