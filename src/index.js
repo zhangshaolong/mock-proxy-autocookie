@@ -87,7 +87,7 @@ const mergeConfigs = (publicConfigs, personalConfigs) => {
   return mergedConfigs
 }
 
-module.exports = (publicConfigs, personalConfigPath) => {
+module.exports = (publicConfigs, personalConfigPath, chromeProfile) => {
   let publicConfigPath
   if (typeof publicConfigs === 'string') {
     publicConfigPath = publicConfigs
@@ -117,7 +117,7 @@ module.exports = (publicConfigs, personalConfigPath) => {
       let proxyConfig = proxyTool.getProxy(req, cfg.proxyConfig)
       utilsTool.getParams(req, urlInfo.query, method, isFormData, proxyConfig).then((params) => {
         if (proxyConfig) {
-          const promise = proxyTool.doProxy(req, res, headers, params, method, proxyConfig)
+          const promise = proxyTool.doProxy(req, res, headers, params, method, proxyConfig, chromeProfile)
           if (proxyConfig.fillMissingMock) {
             promise.then((buffer) => {
               mockTool.fillMissingMock(urlInfo.pathname, buffer, cfg)

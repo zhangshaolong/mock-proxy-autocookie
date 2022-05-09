@@ -55,7 +55,7 @@ const flushQueues = (host, cookies) => {
   })
 }
 
-const getProxyCookies = (host) => {
+const getProxyCookies = (host, chromeProfile) => {
   let pending = pendings[host]
   if (!pending) {
     pending = pendings[host] = {
@@ -76,7 +76,7 @@ const getProxyCookies = (host) => {
         resolve(cookies)
         flushQueues(host, cookies)
         pending.status = 'done'
-      })
+      }, chromeProfile)
     } catch (e) {
       resolve({})
       flushQueues(host, cookies)
@@ -139,7 +139,7 @@ const getProxy = (request, proxyConfig) => {
   return false
 }
 
-const doProxy = (request, response, headers, params, method, proxyConfig) => {
+const doProxy = (request, response, headers, params, method, proxyConfig, chromeProfile) => {
   const isHttps = proxyConfig.isHttps != null ? proxyConfig.isHttps : request.protocol === 'https'
   let redirectUrl = request.url
   if (proxyConfig.redirect) {
@@ -149,7 +149,7 @@ const doProxy = (request, response, headers, params, method, proxyConfig) => {
   headers.connection = 'close'
 
   return new Promise((resolve) => {
-    getProxyCookies(`http${isHttps? 's' : ''}://${headers.host}`).then((cookies) => {
+    getProxyCookies(`http${isHttps? 's' : ''}://${headers.host}`, chromeProfile).then((cookies) => {
       const mergedCookies = {}
       if (headers.cookie) {
         let cookieKv = headers.cookie.split(/\s*;\s*/)
