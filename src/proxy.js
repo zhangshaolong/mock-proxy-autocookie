@@ -72,7 +72,7 @@ const getProxyCookies = (host, chromeProfile) => {
   return new Promise((resolve) => {
     try {
       pending.status = 'pending'
-      chrome.getCookies(host, function(_, cookies = {}) {
+      chrome.getCookies(host, '', function(_, cookies = {}) {
         resolve(cookies)
         flushQueues(host, cookies)
         pending.status = 'done'
