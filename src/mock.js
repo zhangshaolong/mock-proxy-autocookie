@@ -18,7 +18,7 @@ const metaReg = /^\s*\/\*([\s\S]*?)\*\//m
 
 const isMockDataReg = /^\s*(?:function|\{)/
 
-const getMockDataFromFilePath = (pathName, params, request, response) => {
+const getMockDataFromFilePath = (pathName, params, request, response, options) => {
   const exist = fs.existsSync(pathName)
   if (exist) {
     let mtime = fs.statSync(pathName).mtime.getTime()
@@ -67,7 +67,7 @@ const getMockDataFromFilePath = (pathName, params, request, response) => {
         request,
         response,
         __dirname: path.resolve(pathName, '..'),
-        tools: {} // 后续可以进行mock的功能扩展，比如提供生成range数据等等
+        tools: options.mockConfig && options.mockConfig.tools || {} // 后续可以进行mock的功能扩展，比如提供生成range数据等等
       })
     }
     const sleep = result.sleep
@@ -101,6 +101,9 @@ const getMockDataFromFilePath = (pathName, params, request, response) => {
       }
     }
   } else {
+    if (options.mockConfig && options.mockConfig.fillMissingMock) {
+      fillMissingMock(pathName, null, options)
+    }
     return {
       writeHead: [500],
       output: [pathName + ' file is not existed~', encoding]
@@ -136,7 +139,7 @@ const getMockPath = (pathName, options) => {
 const doMock = (pathName, request, response, params, options) => {
   try {
     pathName = getMockPath(pathName, options)
-    const result = getMockDataFromFilePath(pathName, params, request, response)
+    const result = getMockDataFromFilePath(pathName, params, request, response, options)
     if (!isNaN(result.sleep)) {
       setTimeout(() => {
         response.writeHead.apply(response, result.writeHead)
@@ -170,15 +173,29 @@ const fillMissingMock = (pathName, data, options) => {
   try {
     pathName = getMockPath(pathName, options)
     if (!fs.existsSync(pathName)) {
-      const contentEncoding = data.headers['content-encoding']
-      let response
-      let decode = data.buffer
-      if (contentEncoding === 'gzip') {
-        decode = zlib.unzipSync(data.buffer)
-      } else if (contentEncoding === 'br') {
-        decode = zlib.brotliDecompressSync(data.buffer)
+      let jsonStr;
+      if (data) {
+        const contentEncoding = data.headers['content-encoding']
+        let decode = data.buffer
+        if (contentEncoding === 'gzip') {
+          decode = zlib.unzipSync(data.buffer)
+        } else if (contentEncoding === 'br') {
+          decode = zlib.brotliDecompressSync(data.buffer)
+        }
+        jsonStr = decode.toString()
+      } else {
+        if (options.mockConfig) {
+          const fillMissingMock = options.mockConfig.fillMissingMock
+          if (fillMissingMock) {
+            if (typeof fillMissingMock === 'object') {
+              jsonStr = JSON.stringify(fillMissingMock);
+            } else {
+              jsonStr = '{}'
+            }
+          }
+        }
       }
-      response = JSON.stringify(JSON.parse(decode.toString()), null, 2)
+      const response = JSON.stringify(JSON.parse(jsonStr), null, 2)
       fs.mkdirSync(pathName.replace(/\/[^/]+$/, ''), {recursive: true})
       fs.writeFile(pathName, response, {encoding, flags: 'w+'}, (e) => {
         console.log(e)
@@ -191,6 +208,5 @@ const fillMissingMock = (pathName, data, options) => {
 
 module.exports = {
   doMock,
-  fillMissingMock,
-  getMockDataFromFilePath
+  fillMissingMock
 }
