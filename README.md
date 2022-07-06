@@ -2,6 +2,8 @@
 
 前后端分离项目中的本地mock及远程代理
 
+notice: if use auto proxy cookie, you need install chrome-cookies-secure for your project, because it is peerDependencies
+
 install
 ```shell
 npm install mock-proxy-autocookie --save-dev
@@ -75,7 +77,8 @@ app.use(mockProxy(
 
 app.use(mockProxy(
   '/xxx/config.js',
-  '/xxx/personal_path_config.js'
+  '/xxx/personal_path_config.js',
+  profile // profile default is "Default", to check your profile, look at ~/Library/Application Support/Google/Chrome/${profile}/Cookies
 ));
 ```
 
