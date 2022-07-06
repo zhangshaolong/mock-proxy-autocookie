@@ -171,7 +171,6 @@ const doMock = (apiPath, request, response, params, options) => {
 const fillMissingMock = (apiPath, data, options, params) => {
   try {
     const mockFilePath = getMockPath(apiPath, options)
-    console.log(apiPath, mockFilePath)
     if (!fs.existsSync(mockFilePath)) {
       let jsonStr;
       if (data) {
