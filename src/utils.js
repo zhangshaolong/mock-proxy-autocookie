@@ -40,11 +40,11 @@ const mergeData = (original) => {
   })
 }
 
-const getApiConfig = (pathName, cfgs) => {
+const getApiConfig = (apiPath, cfgs) => {
   for (let i = 0; i < cfgs.length; i++) {
     const rules = [].concat(cfgs[i].rules)
     for (let j = 0; j < rules.length; j++) {
-      if (new RegExp(rules[j]).test(pathName)) {
+      if (new RegExp(rules[j]).test(apiPath)) {
         return cfgs[i]
       }
     }

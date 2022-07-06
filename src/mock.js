@@ -18,14 +18,14 @@ const metaReg = /^\s*\/\*([\s\S]*?)\*\//m
 
 const isMockDataReg = /^\s*(?:function|\{)/
 
-const getMockDataFromFilePath = (pathName, params, request, response, options) => {
-  const exist = fs.existsSync(pathName)
+const getMockDataFromFilePath = (apiPath, mockFilePath, params, request, response, options) => {
+  const exist = fs.existsSync(mockFilePath)
   if (exist) {
-    let mtime = fs.statSync(pathName).mtime.getTime()
-    let cachedApi = cachedApis[pathName]
+    let mtime = fs.statSync(mockFilePath).mtime.getTime()
+    let cachedApi = cachedApis[mockFilePath]
     if (!cachedApi || cachedApi.mtime !== mtime) {
       try {
-        let content = new String(fs.readFileSync(pathName, encoding), encoding).trim()
+        let content = new String(fs.readFileSync(mockFilePath, encoding), encoding).trim()
         // 支持在mock配置一些描述信息，实现对API生成接口文档
         let matched = true
         while (matched) {
@@ -40,13 +40,13 @@ const getMockDataFromFilePath = (pathName, params, request, response, options) =
           content = 'return (' + content + ')'
         }
         let result = Function(content)()
-        cachedApis[pathName] = cachedApi = {
+        cachedApis[mockFilePath] = cachedApi = {
           result,
           mtime
         }
       } catch (e) {
         try {
-          const content = fs.readFileSync(pathName, 'binary')
+          const content = fs.readFileSync(mockFilePath, 'binary')
           return {
             writeHead: [200],
             output: [content, 'binary']
@@ -66,7 +66,7 @@ const getMockDataFromFilePath = (pathName, params, request, response, options) =
         require,
         request,
         response,
-        __dirname: path.resolve(pathName, '..'),
+        __dirname: path.resolve(mockFilePath, '..'),
         tools: options.mockConfig && options.mockConfig.tools || {} // 后续可以进行mock的功能扩展，比如提供生成range数据等等
       })
     }
@@ -102,28 +102,27 @@ const getMockDataFromFilePath = (pathName, params, request, response, options) =
     }
   } else {
     if (options.mockConfig && options.mockConfig.fillMissingMock) {
-      fillMissingMock(pathName, null, options)
+      fillMissingMock(apiPath, null, options, params)
     }
     return {
       writeHead: [500],
-      output: [pathName + ' file is not existed~', encoding]
+      output: [mockFilePath + ' file is not existed~', encoding]
     }
   }
 }
 
-const getMockPath = (pathName, options) => {
+const getMockPath = (apiPath, options) => {
   let mockPath = (options.mockConfig && options.mockConfig.path) || 'mock'
   const rules = [].concat(options.rules)
   const len = rules.length
+  let mockFilePath = apiPath
   for (let i = 0; i < len; i++) {
     let rule = new RegExp(rules[i])
     let isApi = false
-    pathName.replace(rule, (match) => {
-      pathName = pathName.replace(match, '_').replace(/^_|_$/, '')
-      const parts = pathName.replace(slashReg, '').split(/\//)
-      pathName = path.resolve(
+    mockFilePath.replace(rule, (match) => {
+      const parts = mockFilePath.replace(slashReg, '').split(/\//)
+      mockFilePath = path.resolve(
         mockPath,
-        match.replace(slashReg, '').replace(/\//g, '_'),
         parts.join('_')
       )
       isApi = true
@@ -132,14 +131,14 @@ const getMockPath = (pathName, options) => {
       break
     }
   }
-  pathName += (options.mockConfig && options.mockConfig.ext) || '.js'
-  return pathName
+  mockFilePath += (options.mockConfig && options.mockConfig.ext) || '.js'
+  return mockFilePath
 }
 
-const doMock = (pathName, request, response, params, options) => {
+const doMock = (apiPath, request, response, params, options) => {
   try {
-    pathName = getMockPath(pathName, options)
-    const result = getMockDataFromFilePath(pathName, params, request, response, options)
+    const mockFilePath = getMockPath(apiPath, options)
+    const result = getMockDataFromFilePath(apiPath, mockFilePath, params, request, response, options)
     if (!isNaN(result.sleep)) {
       setTimeout(() => {
         response.writeHead.apply(response, result.writeHead)
@@ -169,10 +168,11 @@ const doMock = (pathName, request, response, params, options) => {
   }
 }
 
-const fillMissingMock = (pathName, data, options) => {
+const fillMissingMock = (apiPath, data, options, params) => {
   try {
-    pathName = getMockPath(pathName, options)
-    if (!fs.existsSync(pathName)) {
+    const mockFilePath = getMockPath(apiPath, options)
+    console.log(apiPath, mockFilePath)
+    if (!fs.existsSync(mockFilePath)) {
       let jsonStr;
       if (data) {
         const contentEncoding = data.headers['content-encoding']
@@ -187,17 +187,37 @@ const fillMissingMock = (pathName, data, options) => {
         if (options.mockConfig) {
           const fillMissingMock = options.mockConfig.fillMissingMock
           if (fillMissingMock) {
-            if (typeof fillMissingMock === 'object') {
-              jsonStr = JSON.stringify(fillMissingMock);
-            } else {
+            const mockType = typeof fillMissingMock
+            try {
+              if (mockType === 'object') {
+                jsonStr = JSON.stringify(fillMissingMock);
+              } else if (mockType === 'function') {
+                const result = fillMissingMock(apiPath, params)
+                if (result instanceof Promise) {
+                  result.then(json => {
+                    jsonStr = JSON.stringify(json)
+                    const response = JSON.stringify(JSON.parse(jsonStr), null, 2)
+                    fs.mkdirSync(mockFilePath.replace(/\/[^/]+$/, ''), {recursive: true})
+                    fs.writeFile(mockFilePath, response, {encoding, flags: 'w+'}, (e) => {
+                      console.log(e)
+                    })
+                  })
+                  return
+                } else {
+                  jsonStr = JSON.stringify(result)
+                }
+              } else {
+                jsonStr = '{}'
+              }
+            } catch (e) {
               jsonStr = '{}'
             }
           }
         }
       }
       const response = JSON.stringify(JSON.parse(jsonStr), null, 2)
-      fs.mkdirSync(pathName.replace(/\/[^/]+$/, ''), {recursive: true})
-      fs.writeFile(pathName, response, {encoding, flags: 'w+'}, (e) => {
+      fs.mkdirSync(mockFilePath.replace(/\/[^/]+$/, ''), {recursive: true})
+      fs.writeFile(mockFilePath, response, {encoding, flags: 'w+'}, (e) => {
         console.log(e)
       })
     }

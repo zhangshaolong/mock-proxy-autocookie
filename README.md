@@ -20,6 +20,7 @@ module.exports = [
     proxyConfig: {
       host: '12.12.12.12',
       port: 8080,
+      autoCookie: false, // set true for auto proxy cookie, need project install chrome-cookies-secure
       isHttps: false, // default the same with original
       timeout: 30000, // ms, default 30000ms
       headers: { // set custom headers to proxy server, default proxy original headers
@@ -50,7 +51,8 @@ module.exports = [
     },
     mockConfig: {
       path: 'mock', // project`s mock dir name， default 'mock'
-      ext: '.js'
+      ext: '.js',
+      fillMissingMock: boolean || object || (apiPath, params) => (promise<object> | object)
     }
   }
 ]
