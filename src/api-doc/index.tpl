@@ -12,11 +12,13 @@
         border-collapse: collapse;
         text-align: left;
         border-radius: 4px 4px 0 0;
-        text-align: center;
       }
 
       th {
         background: #fafafa;
+        white-space: nowrap;
+        min-width: 140px;
+        padding: 5px;
       }
 
       td {
@@ -135,20 +137,20 @@
     </script>
   </head>
   <body>
-    <center style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">API接口集</center>
+    <center style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">项目API接口全集</center>
     <%
       for (let p = 0; p < _this.length; p++) {
-        let rule = _this[p].rule;
+        let mockPath = _this[p].mockPath;
         let apis = _this[p].apis;
     %>
       <div class="folder" style="display: inline-block; vertical-align: top; margin: 10px; padding: 10px; border: 1px solid #eee;">
-        <div style="font-size: 17px; font-weight: bold; margin-bottom: 10px; display: inline-block;">Module: {{ rule }}</div>
+        <div style="font-size: 17px; font-weight: bold; margin-bottom: 10px; display: inline-block;">MockPath: {{ mockPath }}</div>
           <%
             for (let j = 0; j < apis.length; j++) {
               let meta = apis[j];
           %>
           <div style="border: 1px solid #eee; padding: 5px 10px;">
-            <div style="font-size: 14px; line-height: 30px;"><span class="view" data-id="{{ rule + meta.path}}">Postman</span><a href="{{ meta.path }}" target="_blank">{{ meta.path }}</a></div>
+            <div style="font-size: 14px; line-height: 30px;"><span class="view" data-id="{{ mockPath + meta.path}}">Postman</span><a href="{{ meta.path }}" target="_blank">{{ meta.path }}</a></div>
             <%
               if (meta.desc) {
             %>
@@ -160,14 +162,14 @@
               <%
                 if (/get/i.test(meta.method)) {
               %>
-                <label style="margin-right: 10px;">get<input type="radio" name="{{ rule + meta.path}}" value="get" checked></label>
+                <label style="margin-right: 10px;">get<input type="radio" name="{{ mockPath + meta.path}}" value="get" checked></label>
               <%
                 }
               %>
               <%
                 if (/post/i.test(meta.method)) {
               %>
-                <label>post<input type="radio" name="{{ rule + meta.path}}" value="post" checked></label>
+                <label>post<input type="radio" name="{{ mockPath + meta.path}}" value="post" checked></label>
               <%
                 }
               %>
@@ -188,7 +190,7 @@
                 <%
                   if (params) {
                 %>
-                <textarea id="{{ rule + meta.path }}-textarea">{{ meta.params || '' }}</textarea>
+                <textarea id="{{ mockPath + meta.path }}-textarea">{{ meta.params || '' }}</textarea>
                 <%
                   }
                 %>
@@ -211,9 +213,9 @@
                       <tr>
                         <td>{{ key }}</td>
                         <%
-                          cls.forEach((cl) => {
+                          cls.forEach((cl, idx) => {
                         %>
-                          <td>{{ cl }}</td>
+                          <td>{{ idx === 0 ? cl.replace(/\sl\-l\s/g, '<br />') : cl }}</td>
                         <%
                           })
                         %>
@@ -233,7 +235,7 @@
               if (meta.headers) {
             %>
               <div style="font-size: 12px; line-height: 20px;"><span class="title">Headers</span>
-                <textarea id="{{ rule + meta.path }}-headers">{{ meta.headers }}</textarea>
+                <textarea id="{{ mockPath + meta.path }}-headers">{{ meta.headers }}</textarea>
               </div>
             <%
               }

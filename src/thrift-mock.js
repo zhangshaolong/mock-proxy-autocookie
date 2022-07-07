@@ -206,7 +206,6 @@ const generateMocks = (mockMetaList, outDir) => {
     const fileName = apiPath.replace(/^\//, '').replace(/\//g, '_') + '.js';
     const outPath = path.resolve(outDir)
     const fullPath = path.join(outPath, fileName);
-    console.log(fullPath)
     fs.mkdirSync(outPath, { recursive: true });
     fs.writeFileSync(
       fullPath,

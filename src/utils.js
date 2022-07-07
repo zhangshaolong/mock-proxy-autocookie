@@ -122,38 +122,38 @@ const parseMeta = (data) => {
   return meta
 }
 
-const findAPIs = (pathName) => {
+const findAPIs = (mockPath) => {
   let apis = []
-  if (fs.existsSync(pathName) && fs.statSync(pathName).isDirectory()) {
-    fs.readdirSync(pathName).forEach((api) => {
-      let data = fs.readFileSync(path.join(pathName, api), 'utf8')
-      apis.push(parseMeta(data))
+  if (fs.existsSync(mockPath) && fs.statSync(mockPath).isDirectory()) {
+    fs.readdirSync(mockPath).forEach((fileName) => {
+      let data = fs.readFileSync(path.join(mockPath, fileName), 'utf8')
+      if (data) {
+        const parsed = parseMeta(data)
+        parsed.path && apis.push(parsed)
+      }
     })
   }
   return apis
 }
 
 const getApiDocData = (configs) => {
-  let modules = []
+  let totalApis = []
+  const set = new Set();
   configs.forEach((config) => {
     let mockConfig = config.mockConfig
     if (mockConfig) {
       let mockPath = mockConfig.path
-      let rules = [].concat(config.rules)
-      rules.forEach((rule) => {
-        if (rule.constructor === RegExp) {
-          rule = rule.source
-        }
-        rule = rule.replace(/^\^|\$$/g, '').replace(/\\?\//g, '_').replace(/^_|_$/g, '')
-        let apis = findAPIs(path.resolve(mockPath, rule))
-        modules.push({
-          rule,
+      if (!set.has(mockPath)) {
+        set.add(mockPath)
+        let apis = findAPIs(path.resolve(mockPath))
+        totalApis.push({
+          mockPath,
           apis
         })
-      })
+      }
     }
   })
-  return modules
+  return totalApis
 }
 
 module.exports = {
