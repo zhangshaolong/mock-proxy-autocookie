@@ -2,6 +2,8 @@ const http = require('http')
 
 const https = require('https')
 
+const URL = require('url')
+
 const utilsTool = require('./utils')
 
 const encoding = utilsTool.encoding
@@ -121,13 +123,14 @@ const getProxy = (request, proxyConfig) => {
     if (proxyConfig.host) {
       const excludes = proxyConfig.excludes
       if (excludes) {
+        const pathname = URL.parse(request.url, true).pathname;
         for (let i = 0; i < excludes.length; i++) {
           const exclude = excludes[i]
           if (typeof exclude === 'function') {
             if (exclude(request, proxyConfig)) {
               return false
             }
-          } else if (new RegExp(exclude).test(request.path)) {
+          } else if (new RegExp(exclude).test(pathname)) {
             return false
           }
         }
