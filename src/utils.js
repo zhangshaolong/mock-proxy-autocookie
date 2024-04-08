@@ -1,6 +1,7 @@
 const queryString = require('querystring')
 const path = require('path')
 const fs = require('fs')
+const zlib = require('zlib')
 
 const metaReg = /^\s*\/\*([\s\S]*?)\*\//m
 const docKeyReg = /^[\s\*]*@(path|method|params|desc|type|headers)\s*([\s\S]+)$/gi
@@ -156,10 +157,24 @@ const getApiDocData = (configs) => {
   return totalApis
 }
 
+const getResponseStr = (data) => {
+  if (data) {
+    const contentEncoding = data.headers['content-encoding']
+    let decode = data.buffer
+    if (contentEncoding === 'gzip') {
+      decode = zlib.unzipSync(data.buffer)
+    } else if (contentEncoding === 'br') {
+      decode = zlib.brotliDecompressSync(data.buffer)
+    }
+    return decode.toString()
+  }
+}
+
 module.exports = {
   encoding,
   mergeData,
   getApiConfig,
   getParams,
-  getApiDocData
+  getApiDocData,
+  getResponseStr
 }

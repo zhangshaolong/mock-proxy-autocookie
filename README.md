@@ -49,7 +49,8 @@ module.exports = [
             auth: 'xxxx'
           }
         ]
-      }
+      },
+      afterResponse: (path, responseStr) => responseStr
     },
     mockConfig: {
       path: 'mock', // project`s mock dir name， default 'mock'

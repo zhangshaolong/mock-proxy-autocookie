@@ -88,7 +88,6 @@ const getProxyCookies = (host, chromeProfile) => {
 
 const proxyResponse = (proxyRes, res) => {
   let headers = proxyRes.headers
-  let statusCode = proxyRes.statusCode
   try {
     if (headers) {
       for (let key in headers) {
@@ -105,17 +104,13 @@ const proxyResponse = (proxyRes, res) => {
         res.setHeader(key, val)
       }
     }
-    res.writeHead(statusCode)
   } catch (e) {
     console.log('setHeader error', e.message)
   }
-  return utilsTool.mergeData(proxyRes).then((data) => {
-    res.end(data, encoding)
-    return {
-      buffer: data,
-      headers: headers
-    }
-  })
+  return utilsTool.mergeData(proxyRes).then(data => ({
+    headers,
+    buffer: data
+  }))
 }
 
 const getProxy = (request, proxyConfig) => {
@@ -223,7 +218,19 @@ const mergeCookie = (request, response, headers, params, method, isHttps, cookie
   }
   showProxyLog(proxyConfig, method, options.path, params)
   let proxyReq = (isHttps ? https : http)['request'](options, (proxyRes) => {
-    proxyResponse(proxyRes, response, encoding).then(resolve)
+    proxyResponse(proxyRes, response).then(data => {
+      let buffer = data.buffer
+      if (proxyConfig.afterResponse) {
+        try {
+          buffer = proxyConfig.afterResponse(redirectUrl, utilsTool.getResponseStr(data))
+          response.removeHeader('Content-Length')
+          response.removeHeader('Content-Encoding')
+        } catch (e) {}
+      }
+      response.writeHead(proxyRes.statusCode)
+      response.end(buffer, encoding)
+      resolve(data)
+    })
   })
   proxyReq.on('error', (e) => {
     response.end(
@@ -259,5 +266,5 @@ const doProxy = (request, response, headers, params, method, proxyConfig, chrome
 
 module.exports = {
   doProxy,
-  getProxy
+  getProxy,
 }

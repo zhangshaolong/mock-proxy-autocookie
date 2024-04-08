@@ -2,8 +2,6 @@ const path = require('path')
 
 const fs = require('fs')
 
-const zlib = require('zlib')
-
 const utilsTool = require('./utils')
 
 const encoding = utilsTool.encoding
@@ -172,16 +170,9 @@ const fillMissingMock = (apiPath, data, options, params) => {
   try {
     const mockFilePath = getMockPath(apiPath, options)
     if (!fs.existsSync(mockFilePath)) {
-      let jsonStr;
+      let jsonStr
       if (data) {
-        const contentEncoding = data.headers['content-encoding']
-        let decode = data.buffer
-        if (contentEncoding === 'gzip') {
-          decode = zlib.unzipSync(data.buffer)
-        } else if (contentEncoding === 'br') {
-          decode = zlib.brotliDecompressSync(data.buffer)
-        }
-        jsonStr = decode.toString()
+        jsonStr = utilsTool.getResponseStr(data)
       } else {
         if (options.mockConfig) {
           const fillMissingMock = options.mockConfig.fillMissingMock
