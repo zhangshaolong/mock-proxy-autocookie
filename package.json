@@ -33,11 +33,11 @@
     "chrome-cookies-secure": "^2.0.0"
   },
   "devDependencies": {
-    "service-api": "0.1.4",
+    "service-api": "^0.1.4",
     "simplite": "0.0.2",
     "simplite-loader": "0.0.3",
-    "uglify-es": "3.3.9",
-    "webpack": "4.43.0",
-    "webpack-cli": "3.3.11"
+    "uglify-es": "^3.3.9",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11"
   }
 }
