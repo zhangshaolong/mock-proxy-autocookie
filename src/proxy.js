@@ -107,9 +107,9 @@ const proxyResponse = (proxyRes, res) => {
   } catch (e) {
     console.log('setHeader error', e.message)
   }
-  return utilsTool.mergeData(proxyRes).then(data => ({
+  return utilsTool.mergeData(proxyRes).then(buffer => ({
     headers,
-    buffer: data
+    buffer
   }))
 }
 
@@ -222,9 +222,9 @@ const mergeCookie = (request, response, headers, params, method, isHttps, cookie
       let buffer = data.buffer
       if (proxyConfig.afterResponse) {
         try {
-          buffer = proxyConfig.afterResponse(redirectUrl, utilsTool.getResponseStr(data))
-          response.removeHeader('Content-Length')
-          response.removeHeader('Content-Encoding')
+          buffer = proxyConfig.afterResponse(redirectUrl, utilsTool.getResponseStr(data), request)
+          response.removeHeader('content-length')
+          response.removeHeader('content-encoding')
         } catch (e) {}
       }
       response.writeHead(proxyRes.statusCode)

@@ -50,7 +50,7 @@ module.exports = [
           }
         ]
       },
-      afterResponse: (path, responseStr) => responseStr
+      afterResponse: (path, responseStr, originRequest) => responseStr
     },
     mockConfig: {
       path: 'mock', // project`s mock dir name， default 'mock'
