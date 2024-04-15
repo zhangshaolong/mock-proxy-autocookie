@@ -4,6 +4,8 @@ const https = require('https')
 
 const URL = require('url')
 
+const zlib = require('zlib')
+
 const utilsTool = require('./utils')
 
 const encoding = utilsTool.encoding
@@ -226,8 +228,13 @@ const mergeCookie = (request, response, headers, params, method, isHttps, cookie
             request,
             response
           })
-          response.removeHeader('content-length')
-          response.removeHeader('content-encoding')
+          const contentEncoding = headers['content-encoding']
+          if (contentEncoding === 'gzip') {
+            buffer = zlib.gzipSync(buffer)
+          } else if (contentEncoding === 'br') {
+            buffer = zlib.brotliCompressSync(buffer)
+          }
+          response.setHeader('content-length', buffer.length)
           headers = response.getHeaders()
         } catch (e) {}
       }

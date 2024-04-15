@@ -21,7 +21,7 @@ webpack({
         }
       `
       fs.writeFileSync(path.resolve(__dirname, '../../dist/render.js'), render)
-      fs.unlinkSync(path.resolve(__dirname, '../../dist/main.js'))
+      // fs.unlinkSync(path.resolve(__dirname, '../../dist/main.js'))
     } else {
       console.log(err)
     }

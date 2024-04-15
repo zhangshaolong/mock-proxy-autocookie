@@ -1,6 +1,6 @@
 {
   "name": "mock-proxy-autocookie",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "local server mock and proxy tool",
   "main": "dist/index.js",
   "scripts": {
